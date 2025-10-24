@@ -1,0 +1,38 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+body {
+  @apply antialiased;
+  @apply bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100 dark:from-gray-950 dark:via-blue-950 dark:to-gray-900;
+  @apply text-gray-900 dark:text-gray-100;
+  @apply min-h-screen;
+}
+
+html {
+  @apply scroll-smooth;
+}
+
+/* Custom gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent;
+}
+
+/* Card hover effects */
+.hover-lift {
+  @apply transition-all duration-300 hover:scale-105 hover:shadow-xl;
+}
+
+/* Animated gradient background */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}

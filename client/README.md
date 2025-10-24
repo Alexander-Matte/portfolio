@@ -1,75 +1,75 @@
-# Nuxt Minimal Starter
+# Portfolio Frontend - Alexander Matte
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Modern portfolio website built with Nuxt 3 and Nuxt UI.
 
-## Setup
+## 🚀 Tech Stack
 
-Make sure to install dependencies:
+- **Nuxt 4** - The Intuitive Vue Framework
+- **Nuxt UI v4** - Beautiful and accessible UI components
+- **Tailwind CSS v4** - Utility-first CSS framework
+- **TypeScript** - Type-safe development
+- **Vue 3** - Progressive JavaScript framework
+
+## 📦 Installed Modules
+
+- `@nuxt/ui` - UI component library (100+ components)
+- `@nuxt/icon` - 200,000+ icons from Iconify
+- `@nuxt/image` - Image optimization
+- `@nuxt/fonts` - Web font optimization
+- `@nuxt/eslint` - Code quality
+
+## 🛠️ Development
 
 ```bash
-# npm
+# Install dependencies
 npm install
 
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
+# Start dev server at http://localhost:3000
 npm run dev
 
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
+# Build for production
 npm run build
 
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
+# Preview production build
 npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## 📁 Project Structure
+
+```
+client/
+├── app/
+│   ├── app.vue              # Root component
+│   └── assets/
+│       └── css/
+│           └── main.css     # Global styles
+├── pages/
+│   └── index.vue            # Homepage
+├── app.config.ts            # Nuxt UI theme configuration
+├── nuxt.config.ts           # Nuxt configuration
+└── package.json
+```
+
+## 🎨 Features
+
+- ✅ Responsive design (mobile-first)
+- ✅ Dark mode support (automatic)
+- ✅ SEO optimized
+- ✅ Accessible components (WCAG compliant)
+- ✅ Beautiful typography
+- ✅ Icon system with 200k+ icons
+- ✅ Type-safe with TypeScript
+
+## 🔗 API Integration
+
+Ready to connect to the Symfony API at `http://localhost:80`
+
+## 📚 Documentation
+
+- [Nuxt Docs](https://nuxt.com/docs)
+- [Nuxt UI Docs](https://ui.nuxt.com/docs)
+- [Tailwind CSS Docs](https://tailwindcss.com/docs)
+
+---
+
+**Built by Alexander Matte** • Student at Vocational School, Baden-Württemberg, Germany
