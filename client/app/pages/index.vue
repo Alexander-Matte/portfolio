@@ -1,3 +1,12 @@
+<script setup lang="ts">
+useSeoMeta({
+  title: 'Alex\'s Portfolio',
+  description: 'Portfolio of Alexander Matte, a software developer student specializing in Symfony/PHP backend development and Nuxt frontend development.',
+  ogTitle: 'Alexander Matte - Software Developer Student',
+  ogDescription: 'Portfolio of Alexander Matte, a software developer student from Baden-Württemberg, Germany.',
+})
+</script>
+
 <template>
   <div class="relative">
     <!-- Decorative background elements -->
@@ -33,6 +42,16 @@
           <div class="flex gap-4 justify-center pt-6 flex-wrap">
             <UButton 
               size="xl" 
+              icon="i-heroicons-beaker"
+              to="/api-playground"
+              class="shadow-lg hover:shadow-xl transition-shadow animate-pulse"
+            >
+              Try API Playground
+            </UButton>
+            <UButton 
+              size="xl" 
+              color="gray"
+              variant="outline"
               icon="i-heroicons-code-bracket"
               to="#skills"
               class="shadow-lg hover:shadow-xl transition-shadow"
@@ -42,7 +61,7 @@
             <UButton 
               size="xl" 
               color="gray" 
-              variant="outline"
+              variant="ghost"
               icon="i-heroicons-envelope"
               to="#contact"
               class="shadow-lg hover:shadow-xl transition-shadow"
@@ -271,7 +290,7 @@
                 <span class="font-semibold">Vue.js</span>
               </div>
               <div class="flex items-center gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg transition-all hover:scale-105">
-                <UIcon name="i-skill-icons-html-5" class="text-3xl" />
+                <UIcon name="i-skill-icons-html" class="text-3xl" />
                 <span class="font-semibold">HTML & CSS</span>
               </div>
               <div class="flex items-center gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg transition-all hover:scale-105">
@@ -366,7 +385,7 @@
             <ul class="space-y-2 text-gray-700 dark:text-gray-300">
               <li class="flex items-start gap-2">
                 <UIcon name="i-heroicons-check-circle" class="text-green-500 mt-1" />
-                <span>Nuxt 4 and Vue Composition API</span>
+                <span>Nuxt 4 with the Vue Composition API</span>
               </li>
               <li class="flex items-start gap-2">
                 <UIcon name="i-heroicons-check-circle" class="text-green-500 mt-1" />
@@ -442,34 +461,6 @@
           </UCard>
         </div>
       </section>
-
-      <!-- Footer -->
-      <footer class="py-16 mt-12">
-        <div class="max-w-4xl mx-auto">
-          <div class="text-center space-y-4 p-8 rounded-2xl bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 backdrop-blur-sm">
-            <div class="flex items-center justify-center gap-2 text-2xl font-bold">
-              <UIcon name="i-heroicons-code-bracket" class="text-blue-600 dark:text-blue-400" />
-              <span class="gradient-text">Alexander Matte</span>
-            </div>
-            <p class="text-gray-700 dark:text-gray-300 font-medium">
-              © 2025 • Built with <span class="text-green-600 dark:text-green-400 font-semibold">Nuxt</span> & <span class="text-blue-600 dark:text-blue-400 font-semibold">Symfony</span>
-            </p>
-            <p class="text-sm text-gray-600 dark:text-gray-400 flex items-center justify-center gap-2">
-              <UIcon name="i-heroicons-academic-cap" />
-              Vocational School Student • Baden-Württemberg, Germany
-            </p>
-          </div>
-        </div>
-      </footer>
     </UContainer>
   </div>
 </template>
-
-<script setup lang="ts">
-useSeoMeta({
-  title: 'Alexander Matte - Software Developer Student',
-  description: 'Portfolio of Alexander Matte, a software developer student specializing in Symfony/PHP backend development and Nuxt frontend development.',
-  ogTitle: 'Alexander Matte - Software Developer Student',
-  ogDescription: 'Portfolio of Alexander Matte, a software developer student from Baden-Württemberg, Germany.',
-})
-</script>
