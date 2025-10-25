@@ -5,7 +5,6 @@ const props = defineProps<{
   error: NuxtError
 }>()
 
-// Customize error messages based on status code
 const getErrorDetails = (error: NuxtError) => {
   switch (error.statusCode) {
     case 404:
@@ -35,7 +34,6 @@ const errorDetails = getErrorDetails(props.error)
 <template>
   <NuxtLayout>
     <div class="relative min-h-[calc(100vh-var(--ui-header-height)-var(--ui-footer-height))]">
-      <!-- Decorative background elements (matching your portfolio style) -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/20 dark:bg-blue-600/10 rounded-full blur-3xl"></div>
         <div class="absolute top-80 -left-40 w-96 h-96 bg-purple-400/20 dark:bg-purple-600/10 rounded-full blur-3xl"></div>

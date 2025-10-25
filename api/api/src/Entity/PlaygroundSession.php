@@ -6,8 +6,10 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use App\Repository\PlaygroundSessionRepository;
+use App\State\PlaygroundSessionProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: PlaygroundSessionRepository::class)]
 #[ORM\Index(name: 'idx_username', columns: ['username'])]
@@ -17,13 +19,15 @@ use Doctrine\ORM\Mapping as ORM;
     operations: [
         new Post(
             uriTemplate: '/sessions',
-            description: 'Generate a new playground session with auto-generated username'
+            description: 'Generate a new playground session with auto-generated username',
+            processor: PlaygroundSessionProcessor::class
         ),
         new Get(
             uriTemplate: '/sessions/{id}',
             description: 'Get session details'
         )
-    ]
+    ],
+    normalizationContext: ['groups' => ['session:read']]
 )]
 class PlaygroundSession
 {
@@ -33,15 +37,18 @@ class PlaygroundSession
     private ?int $id = null;
 
     #[ORM\Column(length: 75, unique: true)]
+    #[Groups(['session:read'])]
     private ?string $username = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['session:read'])]
     private ?string $token = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Groups(['session:read'])]
     private ?\DateTimeImmutable $expireAt = null;
 
     #[ORM\Column]

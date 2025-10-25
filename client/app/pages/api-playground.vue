@@ -4,21 +4,17 @@ useSeoMeta({
   description: 'Interactive API Platform demonstration showcasing Symfony backend development skills with real-time features.',
 })
 
-// User session state
 const username = ref<string | null>(null)
 const isConnected = ref(false)
 
-// API endpoint selection
 const selectedEndpoint = ref<string | null>(null)
 const selectedMethod = ref<'GET' | 'POST' | 'PUT' | 'DELETE'>('GET')
 
-// Request/Response state
 const requestBody = ref<string>('')
 const responseData = ref<any>(null)
 const responseTime = ref<number | null>(null)
 const isLoading = ref(false)
 
-// Real-time updates (Mercure)
 const realtimeUpdates = ref<any[]>([])
 
 // TODO: Implement API calls
@@ -36,7 +32,6 @@ const realtimeUpdates = ref<any[]>([])
     </div>
 
     <UContainer class="relative py-12">
-      <!-- Header Section -->
       <section class="mb-12">
         <div class="text-center space-y-4">
           <UBadge color="green" variant="subtle" size="lg" class="shadow-lg">
@@ -56,7 +51,6 @@ const realtimeUpdates = ref<any[]>([])
         </div>
       </section>
 
-      <!-- User Info & Status Bar -->
       <section class="mb-8">
         <UCard class="backdrop-blur-sm bg-white/80 dark:bg-gray-900/80">
           <div class="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -96,7 +90,6 @@ const realtimeUpdates = ref<any[]>([])
             </div>
           </div>
 
-          <!-- Data Purge Notice -->
           <UAlert
             color="amber"
             variant="soft"
@@ -109,9 +102,7 @@ const realtimeUpdates = ref<any[]>([])
       </section>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Column: API Explorer -->
         <div class="lg:col-span-2 space-y-6">
-          <!-- Endpoint Selection -->
           <UCard>
             <template #header>
               <div class="flex items-center gap-2">
@@ -120,7 +111,6 @@ const realtimeUpdates = ref<any[]>([])
               </div>
             </template>
 
-            <!-- Method & Endpoint Selector -->
             <div class="space-y-4">
               <div class="flex gap-2">
                 <USelectMenu
@@ -137,7 +127,6 @@ const realtimeUpdates = ref<any[]>([])
                 </USelectMenu>
               </div>
 
-              <!-- Request Body (for POST/PUT) -->
               <div v-if="selectedMethod === 'POST' || selectedMethod === 'PUT'">
                 <label class="block text-sm font-medium mb-2">Request Body (JSON)</label>
                 <UTextarea
@@ -148,7 +137,6 @@ const realtimeUpdates = ref<any[]>([])
                 />
               </div>
 
-              <!-- Execute Button -->
               <UButton
                 block
                 size="xl"
@@ -161,7 +149,6 @@ const realtimeUpdates = ref<any[]>([])
             </div>
           </UCard>
 
-          <!-- Response Viewer -->
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
@@ -183,14 +170,11 @@ const realtimeUpdates = ref<any[]>([])
                 </div>
               </div>
 
-              <pre v-else class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg overflow-auto text-sm">
-                <!-- TODO: Format JSON response -->
-                {{ responseData }}
+              <pre v-else class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg overflow-auto text-sm">{{ responseData }}
               </pre>
             </div>
           </UCard>
 
-          <!-- Available Endpoints Documentation -->
           <UCard>
             <template #header>
               <div class="flex items-center gap-2">
@@ -281,9 +265,7 @@ const realtimeUpdates = ref<any[]>([])
           </UCard>
         </div>
 
-        <!-- Right Column: Real-time Activity & Stats -->
         <div class="space-y-6">
-          <!-- API Stats -->
           <UCard>
             <template #header>
               <div class="flex items-center gap-2">
@@ -318,7 +300,6 @@ const realtimeUpdates = ref<any[]>([])
             </div>
           </UCard>
 
-          <!-- Real-time Activity Feed -->
           <UCard>
             <template #header>
               <div class="flex items-center gap-2">
@@ -333,18 +314,14 @@ const realtimeUpdates = ref<any[]>([])
                 <p class="text-sm">Waiting for real-time updates...</p>
               </div>
 
-              <!-- TODO: Real-time update items -->
               <div
                 v-for="update in realtimeUpdates"
                 :key="update.id"
                 class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-              >
-                <!-- Update content -->
-              </div>
+              ></div>
             </div>
           </UCard>
 
-          <!-- Quick Actions -->
           <UCard>
             <template #header>
               <div class="flex items-center gap-2">
@@ -381,7 +358,6 @@ const realtimeUpdates = ref<any[]>([])
             </div>
           </UCard>
 
-          <!-- Tech Stack Info -->
           <UCard>
             <template #header>
               <div class="flex items-center gap-2">

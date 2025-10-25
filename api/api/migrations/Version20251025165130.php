@@ -19,13 +19,10 @@ final class Version20251025165130 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
-        // Create indexes only if they don't exist
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_username ON activity (username)');
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_timestamp ON activity (timestamp)');
         $this->addSql('CREATE INDEX IF NOT EXISTS idx_type ON activity (type)');
         
-        // Modify global_counter id to be non-auto-increment (singleton pattern)
         $this->addSql('ALTER TABLE global_counter ALTER id TYPE INT');
         $this->addSql('ALTER TABLE global_counter ALTER id DROP IDENTITY');
         
@@ -45,7 +42,6 @@ final class Version20251025165130 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        // this down() migration is auto-generated, please modify it to your needs
         $this->addSql('DROP INDEX UNIQ_460D5BCAF85E0677');
         $this->addSql('DROP INDEX idx_token');
         $this->addSql('DROP INDEX idx_expire_at');
