@@ -13,8 +13,10 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Repository\TaskRepository;
+use App\State\TaskProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
@@ -28,23 +30,28 @@ use Symfony\Component\Validator\Constraints as Assert;
             description: 'Get all tasks for the authenticated user'
         ),
         new Post(
-            description: 'Create a new task'
+            description: 'Create a new task',
+            processor: TaskProcessor::class
         ),
         new Get(
             description: 'Get a single task'
         ),
         new Put(
-            description: 'Update a task (full update)'
+            description: 'Update a task (full update)',
+            processor: TaskProcessor::class
         ),
         new Patch(
-            description: 'Partially update a task'
+            description: 'Partially update a task',
+            processor: TaskProcessor::class
         ),
         new Delete(
             description: 'Delete a task'
         )
     ],
     paginationEnabled: true,
-    paginationItemsPerPage: 30
+    paginationItemsPerPage: 30,
+    normalizationContext: ['groups' => ['task:read']],
+    denormalizationContext: ['groups' => ['task:write']]
 )]
 #[ApiFilter(BooleanFilter::class, properties: ['completed'])]
 #[ApiFilter(OrderFilter::class, properties: ['createdAt', 'updatedAt'])]
@@ -53,6 +60,7 @@ class Task
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['task:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -63,6 +71,7 @@ class Task
         minMessage: 'Title must be at least {{ limit }} characters',
         maxMessage: 'Title cannot be longer than {{ limit }} characters'
     )]
+    #[Groups(['task:read', 'task:write'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -70,18 +79,23 @@ class Task
         max: 1000,
         maxMessage: 'Description cannot be longer than {{ limit }} characters'
     )]
+    #[Groups(['task:read', 'task:write'])]
     private ?string $description = null;
 
     #[ORM\Column]
+    #[Groups(['task:read', 'task:write'])]
     private bool $completed = false;
 
     #[ORM\Column(length: 75)]
+    #[Groups(['task:read'])]
     private ?string $userId = null;
 
     #[ORM\Column]
+    #[Groups(['task:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['task:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()
