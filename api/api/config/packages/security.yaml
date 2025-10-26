@@ -13,6 +13,7 @@ security:
 
     access_control:
         - { path: ^/sessions, roles: PUBLIC_ACCESS }
+        - { path: ^/api/endpoints, roles: PUBLIC_ACCESS }
         - { path: ^/(tasks|notes|activities|stats), roles: ROLE_PLAYGROUND_USER }
 
 when@test:

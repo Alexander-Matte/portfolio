@@ -11,8 +11,10 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Repository\NoteRepository;
+use App\State\Processors\NoteProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: NoteRepository::class)]
@@ -24,20 +26,24 @@ use Symfony\Component\Validator\Constraints as Assert;
             description: 'Get all notes for the authenticated user'
         ),
         new Post(
-            description: 'Create a new note'
+            description: 'Create a new note',
+            processor: NoteProcessor::class
         ),
         new Get(
             description: 'Get a single note'
         ),
         new Put(
-            description: 'Update a note'
+            description: 'Update a note',
+            processor: NoteProcessor::class
         ),
         new Delete(
             description: 'Delete a note'
         )
     ],
     paginationEnabled: true,
-    paginationItemsPerPage: 30
+    paginationItemsPerPage: 30,
+    normalizationContext: ['groups' => ['note:read']],
+    denormalizationContext: ['groups' => ['note:write']]
 )]
 #[ApiFilter(OrderFilter::class, properties: ['createdAt'])]
 class Note
@@ -45,6 +51,7 @@ class Note
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['note:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -55,6 +62,7 @@ class Note
         minMessage: 'Title must be at least {{ limit }} characters',
         maxMessage: 'Title cannot be longer than {{ limit }} characters'
     )]
+    #[Groups(['note:read', 'note:write'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -65,12 +73,15 @@ class Note
         minMessage: 'Content must be at least {{ limit }} characters',
         maxMessage: 'Content cannot be longer than {{ limit }} characters'
     )]
+    #[Groups(['note:read', 'note:write'])]
     private ?string $content = null;
 
     #[ORM\Column(length: 75)]
+    #[Groups(['note:read'])]
     private ?string $userId = null;
 
     #[ORM\Column]
+    #[Groups(['note:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()

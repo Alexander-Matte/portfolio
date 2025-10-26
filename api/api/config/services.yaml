@@ -23,6 +23,10 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
     
-    App\State\TaskProcessor:
+    App\State\Processors\TaskProcessor:
+        bind:
+            $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'
+    
+    App\State\Processors\NoteProcessor:
         bind:
             $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'

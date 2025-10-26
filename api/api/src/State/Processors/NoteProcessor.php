@@ -1,14 +1,14 @@
 <?php
 
-namespace App\State;
+namespace App\State\Processors;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
-use App\Entity\Task;
+use App\Entity\Note;
 use App\Security\PlaygroundUser;
 use Symfony\Bundle\SecurityBundle\Security;
 
-class TaskProcessor implements ProcessorInterface
+class NoteProcessor implements ProcessorInterface
 {
     public function __construct(
         private ProcessorInterface $persistProcessor,
@@ -18,7 +18,7 @@ class TaskProcessor implements ProcessorInterface
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
-        if ($data instanceof Task) {
+        if ($data instanceof Note) {
             $user = $this->security->getUser();
 
             if (!$user instanceof PlaygroundUser) {
@@ -31,3 +31,4 @@ class TaskProcessor implements ProcessorInterface
         return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
     }
 }
+

@@ -6,7 +6,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use App\Repository\PlaygroundSessionRepository;
-use App\State\PlaygroundSessionProcessor;
+use App\State\Processors\PlaygroundSessionProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
