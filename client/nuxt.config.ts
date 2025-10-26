@@ -11,8 +11,17 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@nuxt/icon',
     '@nuxt/image',
-    '@nuxt/ui'
+    '@nuxt/ui',
+    '@pinia/nuxt'
   ],
   
-  css: ['~/assets/css/main.css']
+  css: ['~/assets/css/main.css'],
+
+  // Runtime config - accessible on both client and server
+  runtimeConfig: {
+    // Public keys that are exposed to the client
+    public: {
+      apiBaseUrl: '' // Will be populated from NUXT_PUBLIC_API_BASE_URL env var
+    }
+  }
 })

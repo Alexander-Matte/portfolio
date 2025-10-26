@@ -1,14 +1,28 @@
 <script setup lang="ts">
+// SEO Meta
 useSeoMeta({
   title: 'Alex\'s Portfolio',
   description: 'Portfolio of Alexander Matte, a software developer student specializing in Symfony/PHP backend development and Nuxt frontend development.',
   ogTitle: 'Alexander Matte - Software Developer Student',
   ogDescription: 'Portfolio of Alexander Matte, a software developer student from Baden-Württemberg, Germany.',
 })
+
+// Session store access (session is auto-initialized by middleware)
+const sessionStore = useSessionStore()
 </script>
 
 <template>
   <div class="relative">
+    <!-- Session Status Indicator (Dev/Debug) -->
+    <div v-if="sessionStore.isAuthenticated" class="fixed top-4 right-4 z-50">
+      <UBadge color="success" variant="subtle" size="sm" class="shadow-lg">
+        <span class="flex items-center gap-2">
+          <UIcon name="i-heroicons-check-circle" />
+          Session Active
+        </span>
+      </UBadge>
+    </div>
+    
     <!-- Decorative background elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
       <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-400/20 dark:bg-blue-600/10 rounded-full blur-3xl"></div>
