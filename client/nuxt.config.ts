@@ -12,10 +12,26 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/image',
     '@nuxt/ui',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    'pinia-plugin-persistedstate/nuxt'
   ],
   
   css: ['~/assets/css/main.css'],
+
+  // Development server configuration
+  devServer: {
+    host: '0.0.0.0', // Listen on all network interfaces
+    port: 3000
+  },
+
+  vite: {
+    server: {
+      hmr: {
+        protocol: 'ws',
+        clientPort: 3000
+      }
+    }
+  },
 
   // Runtime config - accessible on both client and server
   runtimeConfig: {

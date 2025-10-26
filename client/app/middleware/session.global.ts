@@ -4,7 +4,7 @@
  */
 export default defineNuxtRouteMiddleware(async (to, from) => {
   const sessionStore = useSessionStore()
-
+  
   // Skip if session already exists and is valid
   if (sessionStore.isAuthenticated) {
     return

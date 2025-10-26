@@ -8,7 +8,8 @@
 
 {$CADDY_EXTRA_CONFIG}
 
-{$SERVER_NAME:localhost} {
+# HTTP only (no auto HTTPS redirect) for development
+http://{$SERVER_NAME:localhost} {
 	log {
 		# Redact the authorization query parameter that can be set by Mercure
 		format filter {

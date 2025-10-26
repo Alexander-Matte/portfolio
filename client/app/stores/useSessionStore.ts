@@ -13,7 +13,11 @@ export const useSessionStore = defineStore('session', () => {
     
     // Check if token is expired
     const now = new Date()
-    return session.value.expireAt > now
+    const expireAt = session.value.expireAt instanceof Date 
+      ? session.value.expireAt 
+      : new Date(session.value.expireAt)
+    
+    return expireAt > now
   })
 
   const username = computed(() => session.value?.username ?? null)
@@ -74,9 +78,9 @@ export const useSessionStore = defineStore('session', () => {
 
   return {
     // State
-    session: readonly(session),
-    isLoading: readonly(isLoading),
-    error: readonly(error),
+    session,
+    isLoading,
+    error,
     
     // Getters
     isAuthenticated,
@@ -90,4 +94,6 @@ export const useSessionStore = defineStore('session', () => {
     setLoading,
     initializeSession
   }
+}, {
+  persist: true
 })

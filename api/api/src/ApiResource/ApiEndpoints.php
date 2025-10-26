@@ -9,7 +9,7 @@ use App\State\Providers\ApiEndpointsProvider;
 #[ApiResource(
     operations: [
         new Get(
-            uriTemplate: '/api/endpoints',
+            uriTemplate: '/endpoints',
             description: 'Get all available API endpoints with their operations and properties',
             provider: ApiEndpointsProvider::class
         )
