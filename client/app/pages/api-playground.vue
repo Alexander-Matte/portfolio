@@ -66,6 +66,17 @@ const availableMethods = computed((): Array<'GET' | 'POST' | 'PUT' | 'PATCH' | '
 const selectedEndpoint = ref<string>('/api/endpoints')
 const selectedMethod = ref<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'>('GET')
 
+// Path parameters handling
+const pathParams = ref<Record<string, string>>({})
+
+// Extract path parameters from endpoint (e.g., {id}, {uuid})
+const pathParameterNames = computed(() => {
+  if (!selectedEndpoint.value) return []
+  const matches = selectedEndpoint.value.match(/\{([^}]+)\}/g)
+  if (!matches) return []
+  return matches.map(match => match.slice(1, -1)) // Remove { and }
+})
+
 // Watch for endpoint changes and update method if needed
 watch(selectedEndpoint, (newEndpoint) => {
   if (newEndpoint && availableMethods.value.length > 0) {
@@ -75,6 +86,9 @@ watch(selectedEndpoint, (newEndpoint) => {
       selectedMethod.value = firstMethod
     }
   }
+  
+  // Reset path parameters when endpoint changes
+  pathParams.value = {}
 })
 
 const requestBody = ref<string>('')
@@ -87,6 +101,72 @@ const realtimeUpdates = ref<any[]>([])
 // TODO: Implement API calls
 // TODO: Implement Mercure connection
 // TODO: Implement data purge
+
+const executeRequest = async () => {
+  isLoading.value = true
+  responseData.value = null
+  responseTime.value = null
+
+  try {
+    const startTime = Date.now()
+    
+    // Replace path parameters in the endpoint URL
+    let finalEndpoint = selectedEndpoint.value
+    for (const paramName of pathParameterNames.value) {
+      const paramValue = pathParams.value[paramName]
+      if (!paramValue || paramValue.trim() === '') {
+        responseData.value = { error: `Missing required path parameter: ${paramName}` }
+        isLoading.value = false
+        return
+      }
+      finalEndpoint = finalEndpoint.replace(`{${paramName}}`, encodeURIComponent(paramValue))
+    }
+    
+    // Prepare headers
+    const headers: Record<string, string> = {
+      'Accept': 'application/ld+json',
+    }
+    
+    // Add authentication token if available
+    if (sessionStore.token) {
+      headers['Authorization'] = `Bearer ${sessionStore.token}`
+    }
+    
+    // Prepare request options
+    const options: any = {
+      method: selectedMethod.value,
+      headers,
+    }
+    
+    // Add body for POST, PUT, PATCH requests
+    if (['POST', 'PUT', 'PATCH'].includes(selectedMethod.value) && requestBody.value.trim()) {
+      headers['Content-Type'] = 'application/ld+json'
+      try {
+        options.body = JSON.parse(requestBody.value)
+      } catch (e) {
+        responseData.value = { error: 'Invalid JSON in request body' }
+        isLoading.value = false
+        return
+      }
+    }
+    
+    const data = await $fetch(
+      buildApiUrl(finalEndpoint),
+      options
+    )
+    
+    responseData.value = data
+    responseTime.value = Date.now() - startTime
+  } catch (error: any) {
+    responseData.value = {
+      error: error.message || 'Request failed',
+      statusCode: error.statusCode,
+      data: error.data
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -195,6 +275,23 @@ const realtimeUpdates = ref<any[]>([])
                 />
               </div>
 
+              <!-- Path Parameters -->
+              <div v-if="pathParameterNames.length > 0" class="space-y-3">
+                <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Path Parameters
+                </div>
+                <div v-for="paramName in pathParameterNames" :key="paramName" class="space-y-1">
+                  <label class="block text-sm text-gray-600 dark:text-gray-400">
+                    {{ paramName }}
+                  </label>
+                  <UInput
+                    v-model="pathParams[paramName]"
+                    :placeholder="`Enter ${paramName}`"
+                    size="lg"
+                  />
+                </div>
+              </div>
+
               <div v-if="selectedMethod === 'POST' || selectedMethod === 'PUT' || selectedMethod === 'PATCH'" class="w-full">
                 <label class="block text-sm font-medium mb-2">Request Body (JSON)</label>
                 <UTextarea
@@ -211,6 +308,7 @@ const realtimeUpdates = ref<any[]>([])
                 icon="i-heroicons-play"
                 :loading="isLoading"
                 :disabled="!selectedEndpoint"
+                @click="executeRequest"
               >
                 Execute Request
               </UButton>
