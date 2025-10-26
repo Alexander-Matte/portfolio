@@ -33,3 +33,27 @@ export interface ApiRequestOptions {
   params?: Record<string, string | number | boolean>
 }
 
+/**
+ * API endpoint operation
+ */
+export interface ApiOperation {
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'UNKNOWN'
+  path: string
+  description: string | null
+}
+
+/**
+ * API endpoint resource
+ */
+export interface ApiEndpoint {
+  name: string
+  operations: ApiOperation[]
+}
+
+/**
+ * API endpoints response
+ */
+export interface ApiEndpointsResponse {
+  endpoints: ApiEndpoint[]
+}
+

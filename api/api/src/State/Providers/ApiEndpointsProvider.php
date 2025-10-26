@@ -49,7 +49,7 @@ class ApiEndpointsProvider implements ProviderInterface
                     
                     $endpoints[$shortName]['operations'][] = [
                         'method' => $method,
-                        'path' => $path,
+                        'path' => '/api' . $path,
                         'description' => $op->getDescription()
                     ];
                 }

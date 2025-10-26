@@ -1,14 +1,81 @@
 <script setup lang="ts">
+import type { ApiEndpointsResponse, ApiOperation } from '~/types/api'
+
 useSeoMeta({
   title: 'API Playground - Alexander Matte',
   description: 'Interactive API Platform demonstration showcasing Symfony backend development skills with real-time features.',
 })
 
-const username = ref<string | null>(null)
-const isConnected = ref(false)
+const sessionStore = useSessionStore()
+const { buildApiUrl } = useApi()
 
-const selectedEndpoint = ref<string | null>(null)
-const selectedMethod = ref<'GET' | 'POST' | 'PUT' | 'DELETE'>('GET')
+const username = computed(() => sessionStore.username)
+const isConnected = computed(() => sessionStore.isAuthenticated)
+
+// Fetch available endpoints
+const { data: endpointsData } = await useFetch<ApiEndpointsResponse>(
+  buildApiUrl('/api/endpoints'),
+  {
+    headers: {
+      'accept': 'application/ld+json'
+    }
+  }
+)
+
+// Flatten all operations into a single list with unique paths
+const allOperations = computed(() => {
+  if (!endpointsData.value?.endpoints) return []
+  
+  const operations: ApiOperation[] = []
+  endpointsData.value.endpoints.forEach(endpoint => {
+    endpoint.operations.forEach(operation => {
+      operations.push(operation)
+    })
+  })
+  return operations
+})
+
+// Create endpoint options for the dropdown (unique paths)
+const endpointOptions = computed(() => {
+  const uniquePaths = new Set<string>()
+  const options: { label: string; value: string }[] = []
+  
+  allOperations.value.forEach(operation => {
+    if (!uniquePaths.has(operation.path)) {
+      uniquePaths.add(operation.path)
+      options.push({
+        label: operation.path,
+        value: operation.path
+      })
+    }
+  })
+  
+  return options
+})
+
+// Get available methods for the selected endpoint
+const availableMethods = computed((): Array<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'> => {
+  if (!selectedEndpoint.value) return []
+  
+  return allOperations.value
+    .filter(op => op.path === selectedEndpoint.value)
+    .map(op => op.method)
+    .filter((method): method is 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' => method !== 'UNKNOWN')
+})
+
+const selectedEndpoint = ref<string>('/api/endpoints')
+const selectedMethod = ref<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'>('GET')
+
+// Watch for endpoint changes and update method if needed
+watch(selectedEndpoint, (newEndpoint) => {
+  if (newEndpoint && availableMethods.value.length > 0) {
+    // If current method is not available for new endpoint, select the first available method
+    const firstMethod = availableMethods.value[0]
+    if (firstMethod && !availableMethods.value.includes(selectedMethod.value)) {
+      selectedMethod.value = firstMethod
+    }
+  }
+})
 
 const requestBody = ref<string>('')
 const responseData = ref<any>(null)
@@ -19,7 +86,6 @@ const realtimeUpdates = ref<any[]>([])
 
 // TODO: Implement API calls
 // TODO: Implement Mercure connection
-// TODO: Implement username generation
 // TODO: Implement data purge
 </script>
 
@@ -34,7 +100,7 @@ const realtimeUpdates = ref<any[]>([])
     <UContainer class="relative py-12">
       <section class="mb-12">
         <div class="text-center space-y-4">
-          <UBadge color="green" variant="subtle" size="lg" class="shadow-lg">
+          <UBadge color="success" variant="subtle" size="lg" class="shadow-lg">
             <span class="flex items-center gap-2">
               <UIcon name="i-heroicons-beaker" />
               Interactive Demo
@@ -80,7 +146,7 @@ const realtimeUpdates = ref<any[]>([])
               </div>
 
               <UButton
-                color="red"
+                color="error"
                 variant="soft"
                 size="sm"
                 icon="i-heroicons-trash"
@@ -91,7 +157,7 @@ const realtimeUpdates = ref<any[]>([])
           </div>
 
           <UAlert
-            color="amber"
+            color="warning"
             variant="soft"
             icon="i-heroicons-information-circle"
             title="Temporary Playground"
@@ -113,27 +179,29 @@ const realtimeUpdates = ref<any[]>([])
 
             <div class="space-y-4">
               <div class="flex gap-2">
-                <USelectMenu
+                <USelect
                   v-model="selectedMethod"
-                  :options="['GET', 'POST', 'PUT', 'DELETE']"
+                  :items="availableMethods"
+                  :disabled="availableMethods.length === 0"
                   class="w-32"
                 />
-                <USelectMenu
+                <USelect
                   v-model="selectedEndpoint"
+                  :items="endpointOptions"
                   placeholder="Select an endpoint..."
+                  value-attribute="value"
+                  option-attribute="label"
                   class="flex-1"
-                >
-                  <!-- TODO: Add endpoint options -->
-                </USelectMenu>
+                />
               </div>
 
-              <div v-if="selectedMethod === 'POST' || selectedMethod === 'PUT'">
+              <div v-if="selectedMethod === 'POST' || selectedMethod === 'PUT' || selectedMethod === 'PATCH'" class="w-full">
                 <label class="block text-sm font-medium mb-2">Request Body (JSON)</label>
                 <UTextarea
                   v-model="requestBody"
                   :rows="8"
                   placeholder='{\n  "name": "Example",\n  "description": "Test data"\n}'
-                  class="font-mono text-sm"
+                  class="font-mono text-sm w-full"
                 />
               </div>
 
@@ -183,7 +251,9 @@ const realtimeUpdates = ref<any[]>([])
               </div>
             </template>
 
-            <UAccordion :items="[
+            <ApiEndpointsList />
+
+            <!-- <UAccordion :items="[
               {
                 label: 'Tasks API',
                 icon: 'i-heroicons-clipboard-document-list',
@@ -261,7 +331,7 @@ const realtimeUpdates = ref<any[]>([])
                   </p>
                 </div>
               </template>
-            </UAccordion>
+            </UAccordion> -->
           </UCard>
         </div>
 
@@ -295,7 +365,7 @@ const realtimeUpdates = ref<any[]>([])
                   <span class="text-gray-600 dark:text-gray-400">Success Rate</span>
                   <span class="font-bold">--%</span>
                 </div>
-                <UProgress :value="0" color="green" />
+                <UProgress :value="0" color="success" />
               </div>
             </div>
           </UCard>
@@ -333,7 +403,7 @@ const realtimeUpdates = ref<any[]>([])
             <div class="space-y-2">
               <UButton
                 block
-                color="gray"
+                color="neutral"
                 variant="soft"
                 icon="i-heroicons-plus"
               >
@@ -341,7 +411,7 @@ const realtimeUpdates = ref<any[]>([])
               </UButton>
               <UButton
                 block
-                color="gray"
+                color="neutral"
                 variant="soft"
                 icon="i-heroicons-document-plus"
               >
@@ -349,7 +419,7 @@ const realtimeUpdates = ref<any[]>([])
               </UButton>
               <UButton
                 block
-                color="gray"
+                color="neutral"
                 variant="soft"
                 icon="i-heroicons-arrow-path"
               >
