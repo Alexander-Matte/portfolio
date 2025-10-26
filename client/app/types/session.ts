@@ -7,7 +7,7 @@ export interface SessionResponse {
   '@type': string
   username: string
   token: string
-  expireAt: string // ISO 8601 date string
+  expireAt: string
 }
 
 /**

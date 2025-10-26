@@ -4,6 +4,8 @@ services:
     depends_on:
       - database
     restart: unless-stopped
+    env_file:
+      - ./api/.env
     environment:
       SERVER_NAME: ${SERVER_NAME:-localhost}, php:80
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
@@ -34,6 +36,8 @@ services:
 ###> doctrine/doctrine-bundle ###
   database:
     image: postgres:${POSTGRES_VERSION:-16}-alpine
+    env_file:
+      - ./api/.env
     environment:
       - POSTGRES_DB=${POSTGRES_DB:-app}
       # You should definitely change the password in production
