@@ -5,17 +5,18 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use App\Repository\UserStatsRepository;
+use App\State\Providers\UserStatsProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: UserStatsRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-#[ORM\Index(name: 'idx_username', columns: ['username'])]
 #[ApiResource(
     operations: [
         new Get(
             uriTemplate: '/stats/me',
-            description: 'Get current user statistics'
+            description: 'Get current user statistics',
+            provider: UserStatsProvider::class
         )
     ]
 )]
@@ -31,6 +32,12 @@ class UserStats
 
     #[ORM\Column]
     private int $requestMade = 0;
+
+    #[ORM\Column]
+    private int $successfulRequests = 0;
+
+    #[ORM\Column]
+    private int $totalResponseTime = 0;
 
     #[ORM\Column]
     private int $tasksCreated = 0;
@@ -58,6 +65,8 @@ class UserStats
         $this->createdAt = new \DateTimeImmutable();
         $this->lastActivity = new \DateTimeImmutable();
         $this->requestMade = 0;
+        $this->successfulRequests = 0;
+        $this->totalResponseTime = 0;
         $this->tasksCreated = 0;
         $this->tasksCompleted = 0;
         $this->notesCreated = 0;
@@ -105,6 +114,62 @@ class UserStats
         $this->requestMade++;
 
         return $this;
+    }
+
+    public function getSuccessfulRequests(): int
+    {
+        return $this->successfulRequests;
+    }
+
+    public function setSuccessfulRequests(int $successfulRequests): static
+    {
+        $this->successfulRequests = $successfulRequests;
+
+        return $this;
+    }
+
+    public function incrementSuccessfulRequests(): static
+    {
+        $this->successfulRequests++;
+
+        return $this;
+    }
+
+    public function getTotalResponseTime(): int
+    {
+        return $this->totalResponseTime;
+    }
+
+    public function setTotalResponseTime(int $totalResponseTime): static
+    {
+        $this->totalResponseTime = $totalResponseTime;
+
+        return $this;
+    }
+
+    public function addResponseTime(int $responseTime): static
+    {
+        $this->totalResponseTime += $responseTime;
+
+        return $this;
+    }
+
+    public function getAverageResponseTime(): int
+    {
+        if ($this->requestMade === 0) {
+            return 0;
+        }
+
+        return (int) ($this->totalResponseTime / $this->requestMade);
+    }
+
+    public function getSuccessRate(): float
+    {
+        if ($this->requestMade === 0) {
+            return 0.0;
+        }
+
+        return ($this->successfulRequests / $this->requestMade) * 100;
     }
 
     public function getTasksCreated(): int

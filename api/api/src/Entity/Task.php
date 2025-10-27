@@ -21,9 +21,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-#[ORM\Index(name: 'idx_user_id', columns: ['user_id'])]
-#[ORM\Index(name: 'idx_completed', columns: ['completed'])]
-#[ORM\Index(name: 'idx_created_at', columns: ['created_at'])]
+#[ORM\Index(name: 'idx_task_user_id', columns: ['user_id'])]
+#[ORM\Index(name: 'idx_task_completed', columns: ['completed'])]
+#[ORM\Index(name: 'idx_task_created_at', columns: ['created_at'])]
 #[ApiResource(
     operations: [
         new GetCollection(

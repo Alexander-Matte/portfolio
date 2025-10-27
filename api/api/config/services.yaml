@@ -30,3 +30,10 @@ services:
     App\State\Processors\NoteProcessor:
         bind:
             $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'
+    
+    App\EventListener\StatsEventListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 100 }
+            - { name: kernel.event_listener, event: kernel.terminate, method: onKernelTerminate }
+            - { name: doctrine.event_listener, event: postPersist }
+            - { name: doctrine.event_listener, event: postUpdate }

@@ -3,6 +3,7 @@
 namespace App\State\Processors;
 
 use ApiPlatform\Metadata\Operation;
+use ApiPlatform\Metadata\Post;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Note;
 use App\Security\PlaygroundUser;
@@ -25,7 +26,10 @@ class NoteProcessor implements ProcessorInterface
                 throw new \RuntimeException('User must be authenticated');
             }
 
-            $data->setUserId($user->getUserIdentifier());
+            $username = $user->getUserIdentifier();
+            $data->setUserId($username);
+
+            return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
         }
 
         return $this->persistProcessor->process($data, $operation, $uriVariables, $context);

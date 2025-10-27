@@ -12,7 +12,6 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: PlaygroundSessionRepository::class)]
-#[ORM\Index(name: 'idx_username', columns: ['username'])]
 #[ORM\Index(name: 'idx_token', columns: ['token'])]
 #[ORM\Index(name: 'idx_expire_at', columns: ['expire_at'])]
 #[ApiResource(
