@@ -32,6 +32,16 @@ const getMethodStyle = (method: ApiOperation['method']): { color: BadgeColor; va
   }
   return styles[method] || { color: 'neutral', variant: 'subtle' }
 }
+
+// Prepare accordion items from endpoints
+const accordionItems = computed(() => {
+  return endpoints.value.map((endpoint, index) => ({
+    label: endpoint.name,
+    icon: 'i-heroicons-folder',
+    defaultOpen: index === 0, // First item open by default
+    slot: `endpoint-${index}`
+  }))
+})
 </script>
 
 <template>
@@ -58,23 +68,22 @@ const getMethodStyle = (method: ApiOperation['method']): { color: BadgeColor; va
     </UAlert>
 
     <!-- Endpoints List -->
-    <div v-else-if="endpoints.length > 0" class="space-y-4">
-      <UCard
-        v-for="(endpoint, index) in endpoints"
-        :key="`${endpoint.name}-${index}`"
-        class="hover:shadow-lg transition-shadow"
-      >
-        <template #header>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {{ endpoint.name }}
-          </h3>
-        </template>
-
-        <div class="space-y-3">
+    <UAccordion
+      v-else-if="endpoints.length > 0"
+      :items="accordionItems"
+      :ui="{
+        wrapper: 'space-y-2',
+        item: {
+          base: 'border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden',
+        }
+      }"
+    >
+      <template v-for="(endpoint, index) in endpoints" :key="`endpoint-${index}`" #[`endpoint-${index}`]>
+        <div class="space-y-2 p-4">
           <div
             v-for="(operation, opIndex) in endpoint.operations"
             :key="`${operation.method}-${operation.path}-${opIndex}`"
-            class="flex items-center gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+            class="flex items-center gap-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <UBadge
               :color="getMethodStyle(operation.method).color"
@@ -95,8 +104,8 @@ const getMethodStyle = (method: ApiOperation['method']): { color: BadgeColor; va
             </div>
           </div>
         </div>
-      </UCard>
-    </div>
+      </template>
+    </UAccordion>
 
     <!-- Empty State -->
     <UAlert

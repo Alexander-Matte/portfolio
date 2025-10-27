@@ -12,7 +12,6 @@ const { buildApiUrl } = useApi()
 const username = computed(() => sessionStore.username)
 const isConnected = computed(() => sessionStore.isAuthenticated)
 
-// Fetch available endpoints
 const { data: endpointsData } = await useFetch<ApiEndpointsResponse>(
   buildApiUrl('/api/endpoints'),
   {
@@ -22,7 +21,6 @@ const { data: endpointsData } = await useFetch<ApiEndpointsResponse>(
   }
 )
 
-// Flatten all operations into a single list with unique paths
 const allOperations = computed(() => {
   if (!endpointsData.value?.endpoints) return []
   
@@ -35,7 +33,6 @@ const allOperations = computed(() => {
   return operations
 })
 
-// Create endpoint options for the dropdown (unique paths)
 const endpointOptions = computed(() => {
   const uniquePaths = new Set<string>()
   const options: { label: string; value: string }[] = []
@@ -53,7 +50,6 @@ const endpointOptions = computed(() => {
   return options
 })
 
-// Get available methods for the selected endpoint
 const availableMethods = computed((): Array<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'> => {
   if (!selectedEndpoint.value) return []
   
@@ -65,42 +61,65 @@ const availableMethods = computed((): Array<'GET' | 'POST' | 'PUT' | 'PATCH' | '
 
 const selectedEndpoint = ref<string>('/api/endpoints')
 const selectedMethod = ref<'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'>('GET')
-
-// Path parameters handling
 const pathParams = ref<Record<string, string>>({})
 
-// Extract path parameters from endpoint (e.g., {id}, {uuid})
 const pathParameterNames = computed(() => {
   if (!selectedEndpoint.value) return []
   const matches = selectedEndpoint.value.match(/\{([^}]+)\}/g)
   if (!matches) return []
-  return matches.map(match => match.slice(1, -1)) // Remove { and }
+  return matches.map(match => match.slice(1, -1))
 })
 
-// Watch for endpoint changes and update method if needed
-watch(selectedEndpoint, (newEndpoint) => {
-  if (newEndpoint && availableMethods.value.length > 0) {
-    // If current method is not available for new endpoint, select the first available method
+const currentEndpointResource = computed(() => {
+  if (!selectedEndpoint.value || !endpointsData.value?.endpoints) return null
+  
+  return endpointsData.value.endpoints.find(endpoint => 
+    endpoint.operations.some(op => op.path === selectedEndpoint.value)
+  )
+})
+
+const writableProperties = computed(() => {
+  const resource = currentEndpointResource.value
+  if (!resource || !resource.properties) return []
+  
+  return resource.properties.filter(prop => 
+    prop.writable && 
+    !['id', 'createdAt', 'updatedAt', 'userId'].includes(prop.name) &&
+    prop.type !== 'object'
+  )
+})
+
+const formData = ref<Record<string, any>>({})
+
+watch([selectedEndpoint, selectedMethod], () => {
+  formData.value = {}
+
+  
+  writableProperties.value.forEach(prop => {
+    if (prop.type === 'bool') {
+      formData.value[prop.name] = false
+    } else if (prop.type === 'int') {
+      formData.value[prop.name] = 0
+    } else {
+      formData.value[prop.name] = ''
+    }
+  })
+  
+  if (availableMethods.value.length > 0) {
     const firstMethod = availableMethods.value[0]
     if (firstMethod && !availableMethods.value.includes(selectedMethod.value)) {
       selectedMethod.value = firstMethod
     }
   }
   
-  // Reset path parameters when endpoint changes
   pathParams.value = {}
 })
 
-const requestBody = ref<string>('')
 const responseData = ref<any>(null)
 const responseTime = ref<number | null>(null)
 const isLoading = ref(false)
 
 const realtimeUpdates = ref<any[]>([])
-
-// TODO: Implement API calls
-// TODO: Implement Mercure connection
-// TODO: Implement data purge
 
 const executeRequest = async () => {
   isLoading.value = true
@@ -110,7 +129,6 @@ const executeRequest = async () => {
   try {
     const startTime = Date.now()
     
-    // Replace path parameters in the endpoint URL
     let finalEndpoint = selectedEndpoint.value
     for (const paramName of pathParameterNames.value) {
       const paramValue = pathParams.value[paramName]
@@ -122,32 +140,30 @@ const executeRequest = async () => {
       finalEndpoint = finalEndpoint.replace(`{${paramName}}`, encodeURIComponent(paramValue))
     }
     
-    // Prepare headers
     const headers: Record<string, string> = {
       'Accept': 'application/ld+json',
     }
     
-    // Add authentication token if available
     if (sessionStore.token) {
       headers['Authorization'] = `Bearer ${sessionStore.token}`
     }
     
-    // Prepare request options
     const options: any = {
       method: selectedMethod.value,
       headers,
     }
     
-    // Add body for POST, PUT, PATCH requests
-    if (['POST', 'PUT', 'PATCH'].includes(selectedMethod.value) && requestBody.value.trim()) {
+    if (['POST', 'PUT', 'PATCH'].includes(selectedMethod.value)) {
       headers['Content-Type'] = 'application/ld+json'
-      try {
-        options.body = JSON.parse(requestBody.value)
-      } catch (e) {
-        responseData.value = { error: 'Invalid JSON in request body' }
-        isLoading.value = false
-        return
-      }
+      
+      const body: Record<string, any> = {}
+      Object.entries(formData.value).forEach(([key, value]) => {
+        if (value !== '' || typeof value === 'boolean' || typeof value === 'number') {
+          body[key] = value
+        }
+      })
+      
+      options.body = body
     }
     
     const data = await $fetch(
@@ -165,6 +181,27 @@ const executeRequest = async () => {
     }
   } finally {
     isLoading.value = false
+  }
+}
+
+const createSampleTask = async () => {
+  selectedEndpoint.value = '/api/tasks'
+  selectedMethod.value = 'POST'
+  await nextTick()
+  formData.value = {
+    title: "Hello World!",
+    description: "I am a sample task",
+    completed: true
+  }
+}
+
+const createSampleNote = async () => {
+  selectedEndpoint.value = '/api/notes'
+  selectedMethod.value = 'POST'
+  await nextTick()
+  formData.value = {
+    title: "Sample Note",
+    content: "This is a sample note created from the API Playground!"
   }
 }
 </script>
@@ -257,49 +294,114 @@ const executeRequest = async () => {
               </div>
             </template>
 
-            <div class="space-y-4">
-              <div class="flex gap-2">
-                <USelect
-                  v-model="selectedMethod"
-                  :items="availableMethods"
-                  :disabled="availableMethods.length === 0"
-                  class="w-32"
-                />
-                <USelect
-                  v-model="selectedEndpoint"
-                  :items="endpointOptions"
-                  placeholder="Select an endpoint..."
-                  value-attribute="value"
-                  option-attribute="label"
-                  class="flex-1"
-                />
-              </div>
-
-              <!-- Path Parameters -->
-              <div v-if="pathParameterNames.length > 0" class="space-y-3">
-                <div class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Path Parameters
-                </div>
-                <div v-for="paramName in pathParameterNames" :key="paramName" class="space-y-1">
-                  <label class="block text-sm text-gray-600 dark:text-gray-400">
-                    {{ paramName }}
-                  </label>
-                  <UInput
-                    v-model="pathParams[paramName]"
-                    :placeholder="`Enter ${paramName}`"
-                    size="lg"
+            <div class="space-y-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Request Configuration
+                </label>
+                <div class="flex gap-2">
+                  <USelect
+                    v-model="selectedMethod"
+                    :items="availableMethods"
+                    :disabled="availableMethods.length === 0"
+                    class="w-32"
+                  />
+                  <USelect
+                    v-model="selectedEndpoint"
+                    :items="endpointOptions"
+                    placeholder="Select an endpoint..."
+                    value-attribute="value"
+                    option-attribute="label"
+                    class="flex-1"
                   />
                 </div>
               </div>
 
-              <div v-if="selectedMethod === 'POST' || selectedMethod === 'PUT' || selectedMethod === 'PATCH'" class="w-full">
-                <label class="block text-sm font-medium mb-2">Request Body (JSON)</label>
-                <UTextarea
-                  v-model="requestBody"
-                  :rows="8"
-                  placeholder='{\n  "name": "Example",\n  "description": "Test data"\n}'
-                  class="font-mono text-sm w-full"
-                />
+              <div v-if="pathParameterNames.length > 0" class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 space-y-3">
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-heroicons-variable" class="text-primary" />
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Path Parameters</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div v-for="paramName in pathParameterNames" :key="paramName" class="space-y-1">
+                    <label class="block text-sm text-gray-600 dark:text-gray-400">
+                      {{ paramName }}
+                    </label>
+                    <UInput
+                      v-model="pathParams[paramName]"
+                      :placeholder="`Enter ${paramName}`"
+                      size="lg"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedMethod === 'POST' || selectedMethod === 'PUT' || selectedMethod === 'PATCH'" class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 space-y-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <UIcon name="i-heroicons-document-text" class="text-primary" />
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Request Data</span>
+                  </div>
+                  <UBadge v-if="writableProperties.length > 0" color="primary" variant="subtle">
+                    {{ writableProperties.length }} field{{ writableProperties.length !== 1 ? 's' : '' }}
+                  </UBadge>
+                </div>
+
+                <div v-if="writableProperties.length === 0" class="text-center py-8 text-gray-400">
+                  <UIcon name="i-heroicons-information-circle" class="text-3xl mb-2" />
+                  <p class="text-sm">No writable fields available for this endpoint</p>
+                </div>
+
+                <div v-else class="grid grid-cols-1 gap-4 w-full">
+                  <div 
+                    v-for="property in writableProperties"                  >
+                    <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {{ property.name }}
+                      <UBadge v-if="property.required" color="error" variant="soft" size="xs">required</UBadge>
+                      <UBadge color="neutral" variant="subtle" size="xs">{{ property.type }}</UBadge>
+                    </label>
+
+                    <UTextarea
+                      v-if="property.type === 'string' && ['description', 'content'].includes(property.name)"
+                      v-model="formData[property.name]"
+                      :placeholder="`Enter ${property.name}...`"
+                      :rows="3"
+                      class="w-full"
+                      size="lg"
+                    />
+                    <UInput
+                      v-else-if="property.type === 'string'"
+                      v-model="formData[property.name]"
+                      :placeholder="`Enter ${property.name}...`"
+                      class="w-full"
+                      size="lg"
+                    />
+                    <UInput
+                      v-else-if="property.type === 'int'"
+                      v-model.number="formData[property.name]"
+                      type="number"
+                      :placeholder="`Enter ${property.name}...`"
+                      class="w-full"
+                      size="lg"
+                    />
+                    <div v-else-if="property.type === 'bool'" class="flex items-center gap-3 pt-2">
+                      <UToggle
+                        v-model="formData[property.name]"
+                        size="lg"
+                      />
+                      <span class="text-sm text-gray-600 dark:text-gray-400">
+                        {{ formData[property.name] ? 'True' : 'False' }}
+                      </span>
+                    </div>
+                    <UInput
+                      v-else
+                      v-model="formData[property.name]"
+                      :placeholder="`Enter ${property.name}...`"
+                      size="lg"
+                      class="w-full"
+                    />
+                  </div>
+                </div>
               </div>
 
               <UButton
@@ -504,6 +606,7 @@ const executeRequest = async () => {
                 color="neutral"
                 variant="soft"
                 icon="i-heroicons-plus"
+                @click= 'createSampleTask'
               >
                 Create Sample Task
               </UButton>
@@ -512,6 +615,7 @@ const executeRequest = async () => {
                 color="neutral"
                 variant="soft"
                 icon="i-heroicons-document-plus"
+                @click= 'createSampleNote'
               >
                 Create Sample Note
               </UButton>

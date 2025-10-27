@@ -43,11 +43,23 @@ export interface ApiOperation {
 }
 
 /**
+ * API property metadata
+ */
+export interface ApiProperty {
+  name: string
+  type: string | null
+  required: boolean
+  readable: boolean
+  writable: boolean
+}
+
+/**
  * API endpoint resource
  */
 export interface ApiEndpoint {
   name: string
   operations: ApiOperation[]
+  properties: ApiProperty[]
 }
 
 /**

@@ -3,6 +3,8 @@
 namespace App\State\Providers;
 
 use ApiPlatform\Metadata\Operation;
+use ApiPlatform\Metadata\Property\Factory\PropertyMetadataFactoryInterface;
+use ApiPlatform\Metadata\Property\Factory\PropertyNameCollectionFactoryInterface;
 use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInterface;
 use ApiPlatform\Metadata\Resource\Factory\ResourceNameCollectionFactoryInterface;
 use ApiPlatform\State\ProviderInterface;
@@ -16,6 +18,8 @@ class ApiEndpointsProvider implements ProviderInterface
     public function __construct(
         private ResourceNameCollectionFactoryInterface $resourceNameCollectionFactory,
         private ResourceMetadataCollectionFactoryInterface $resourceMetadataCollectionFactory,
+        private PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory,
+        private PropertyMetadataFactoryInterface $propertyMetadataFactory,
     ) {
     }
 
@@ -31,7 +35,6 @@ class ApiEndpointsProvider implements ProviderInterface
             foreach ($resourceMetadataCollection as $resourceMetadata) {
                 $shortName = $resourceMetadata->getShortName();
                 
-                // Skip internal API Platform resources
                 if (in_array($shortName, ['Error', 'ConstraintViolation', 'ConstraintViolationList'])) {
                     continue;
                 }
@@ -39,7 +42,8 @@ class ApiEndpointsProvider implements ProviderInterface
                 if (!isset($endpoints[$shortName])) {
                     $endpoints[$shortName] = [
                         'name' => $shortName,
-                        'operations' => []
+                        'operations' => [],
+                        'properties' => []
                     ];
                 }
 
@@ -52,6 +56,28 @@ class ApiEndpointsProvider implements ProviderInterface
                         'path' => '/api' . $path,
                         'description' => $op->getDescription()
                     ];
+                }
+                
+                if (empty($endpoints[$shortName]['properties'])) {
+                    try {
+                        $propertyNames = $this->propertyNameCollectionFactory->create($resourceName);
+                        
+                        foreach ($propertyNames as $propertyName) {
+                            $propertyMetadata = $this->propertyMetadataFactory->create($resourceName, $propertyName);
+                            
+                            $types = $propertyMetadata->getBuiltinTypes();
+                            $type = !empty($types) ? $types[0]->getBuiltinType() : null;
+                            
+                            $endpoints[$shortName]['properties'][] = [
+                                'name' => $propertyName,
+                                'type' => $type,
+                                'required' => $propertyMetadata->isRequired(),
+                                'readable' => $propertyMetadata->isReadable(),
+                                'writable' => $propertyMetadata->isWritable(),
+                            ];
+                        }
+                    } catch (\Exception $e) {
+                    }
                 }
             }
         }
