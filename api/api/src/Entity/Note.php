@@ -21,6 +21,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_user_id', columns: ['user_id'])]
 #[ORM\Index(name: 'idx_created_at', columns: ['created_at'])]
 #[ApiResource(
+    security: "is_granted('ROLE_PLAYGROUND_USER')",
     operations: [
         new GetCollection(
             description: 'Get all notes for the authenticated user'

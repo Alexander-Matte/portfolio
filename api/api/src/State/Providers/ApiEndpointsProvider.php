@@ -9,7 +9,10 @@ use ApiPlatform\Metadata\Resource\Factory\ResourceMetadataCollectionFactoryInter
 use ApiPlatform\Metadata\Resource\Factory\ResourceNameCollectionFactoryInterface;
 use ApiPlatform\State\ProviderInterface;
 use App\ApiResource\ApiEndpoints;
-
+use App\Security\PlaygroundUser;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpFoundation\Response;
 /**
  * @implements ProviderInterface<ApiEndpoints>
  */
@@ -20,11 +23,19 @@ class ApiEndpointsProvider implements ProviderInterface
         private ResourceMetadataCollectionFactoryInterface $resourceMetadataCollectionFactory,
         private PropertyNameCollectionFactoryInterface $propertyNameCollectionFactory,
         private PropertyMetadataFactoryInterface $propertyMetadataFactory,
+        private Security $security,
     ) {
     }
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): ApiEndpoints
     {
+        $user = $this->security->getUser();
+        if (!$user instanceof PlaygroundUser) {
+            throw new HttpException(
+                Response::HTTP_UNAUTHORIZED,
+                'Full authentication is required to access this resource.'
+            );
+        }
         $dto = new ApiEndpoints();
         $endpoints = [];
         $resourceNames = $this->resourceNameCollectionFactory->create();

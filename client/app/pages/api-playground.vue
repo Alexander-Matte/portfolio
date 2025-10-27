@@ -40,12 +40,22 @@ const { createSampleTask, createSampleNote } = useQuickActions(
   formData
 )
 
+// Clear response data when endpoint changes
+watch(selectedEndpoint, () => {
+  responseData.value = null
+  responseTime.value = null
+})
+
+watch(selectedMethod, () => {
+  responseData.value = null
+  responseTime.value = null
+})
+
 const { 
   requestCount, 
   avgResponseTime, 
-  successRate,
-  refresh: refreshStats,
-  pending: statsPending 
+  pending: statsPending,
+  refresh: refreshStats
 } = useUserStats()
 
 const realtimeUpdates = ref<any[]>([])
@@ -59,8 +69,17 @@ const handleExecute = async () => {
     formData: formData.value,
     token: sessionStore.token,
   })
-  
+  // Refresh stats after request to update the view
   await refreshStats()
+}
+
+const logoutModalOpen = ref(false);
+
+const logoutAndClearData = () => {
+  sessionStore.clearSession()
+  responseData.value = null
+  responseTime.value = null
+  logoutModalOpen.value = false
 }
 </script>
 
@@ -99,9 +118,11 @@ const handleExecute = async () => {
                 <UIcon name="i-heroicons-user-circle" class="text-3xl text-white" />
               </div>
               <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Logged in as</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ username ? 'Logged in as' : 'Not logged in' }}
+                </p>
                 <p class="font-bold text-lg">
-                  {{ username || 'Loading...' }}
+                  {{ username || 'Unauthenticated' }}
                 </p>
               </div>
             </div>
@@ -116,15 +137,50 @@ const handleExecute = async () => {
                   {{ isConnected ? 'Connected' : 'Disconnected' }}
                 </span>
               </div>
-
               <UButton
-                color="error"
-                variant="soft"
-                size="sm"
-                icon="i-heroicons-trash"
+                v-if="!sessionStore.isAuthenticated"
+                label="Login"
+                color="primary"
+                variant="subtle"
+                @click="sessionStore.initializeSession"
+                
+              />
+              <UModal
+                v-else
+                title="Logout and Clear My Data"
+                v-model:open="logoutModalOpen"
               >
-                Clear My Data
-              </UButton>
+                <UButton label="Logout and Clear My Data"
+                 color="error" 
+                 variant="subtle" 
+                 />
+
+                <template #body>
+                  <div class="rounded-xl p-4 space-y-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                      <span class="font-semibold text-red-600 dark:text-red-500">Warning:<br></span>
+                      By accepting, you will be logged out and all your data will be cleared. 
+                      <span class="font-medium">This action cannot be undone.</span>
+                      To continue to interact with the API, you will need to log in again.
+                    </p>
+                  </div>
+
+                </template>
+                <template #footer>
+                <div class="flex justify-center w-full">
+                  <UButton
+                    color="error"
+                    variant="soft"
+                    icon="i-heroicons-trash"
+                    @click="logoutAndClearData"
+                  >
+                    Logout and Clear My Data
+                  </UButton>
+                </div>
+              </template>
+
+
+              </UModal>
             </div>
           </div>
 
@@ -175,8 +231,6 @@ const handleExecute = async () => {
           <ApiPlaygroundApiStatsPanel 
             :request-count="requestCount"
             :avg-response-time="avgResponseTime"
-            :success-rate="successRate"
-            :pending="statsPending"
           />
 
           <UCard>
@@ -204,6 +258,7 @@ const handleExecute = async () => {
           <ApiPlaygroundApiQuickActions
             @create-sample-task="createSampleTask"
             @create-sample-note="createSampleNote"
+            @refresh-data="refreshStats"
           />
 
           <UCard>

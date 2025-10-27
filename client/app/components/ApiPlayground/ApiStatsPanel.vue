@@ -2,8 +2,6 @@
 defineProps<{
   requestCount: number
   avgResponseTime: number
-  successRate: number
-  pending?: boolean
 }>()
 </script>
 
@@ -20,7 +18,7 @@ defineProps<{
       <div>
         <div class="flex justify-between text-sm mb-1">
           <span class="text-gray-600 dark:text-gray-400">Requests Made</span>
-          <span class="font-bold">{{ pending ? '...' : requestCount }}</span>
+          <span class="font-bold">{{ requestCount }}</span>
         </div>
         <UProgress :value="Math.min(requestCount * 5, 100)" />
       </div>
@@ -28,16 +26,8 @@ defineProps<{
       <div>
         <div class="flex justify-between text-sm mb-1">
           <span class="text-gray-600 dark:text-gray-400">Avg Response Time</span>
-          <span class="font-bold">{{ pending ? '...' : avgResponseTime }} ms</span>
+          <span class="font-bold">{{ avgResponseTime }} ms</span>
         </div>
-      </div>
-
-      <div>
-        <div class="flex justify-between text-sm mb-1">
-          <span class="text-gray-600 dark:text-gray-400">Success Rate</span>
-          <span class="font-bold">{{ pending ? '...' : successRate }}%</span>
-        </div>
-        <UProgress :value="successRate" color="success" />
       </div>
     </div>
   </UCard>

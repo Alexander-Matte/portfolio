@@ -107,6 +107,11 @@ class StatsEventListener
             return;
         }
 
+        // Don't count the stats endpoint itself to avoid double-counting
+        if ($path === '/api/stats/me') {
+            return;
+        }
+
 
         if ($request->attributes->get('_stats_processed', false)) {
             return;

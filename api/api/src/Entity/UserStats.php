@@ -8,17 +8,20 @@ use App\Repository\UserStatsRepository;
 use App\State\Providers\UserStatsProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: UserStatsRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
+    security: "is_granted('ROLE_PLAYGROUND_USER')",
     operations: [
         new Get(
             uriTemplate: '/stats/me',
             description: 'Get current user statistics',
             provider: UserStatsProvider::class
         )
-    ]
+        ],
+    normalizationContext: ['groups' => ['stats:read']],
 )]
 class UserStats
 {
@@ -31,33 +34,42 @@ class UserStats
     private ?string $username = null;
 
     #[ORM\Column]
+    #[Groups(['stats:read'])]
     private int $requestMade = 0;
 
     #[ORM\Column]
+    #[Groups(['stats:read'])]
     private int $successfulRequests = 0;
 
     #[ORM\Column]
+    #[Groups(['stats:read'])]
     private int $totalResponseTime = 0;
 
     #[ORM\Column]
+    #[Groups(['stats:read'])]
     private int $tasksCreated = 0;
 
     #[ORM\Column]
+    #[Groups(['stats:read'])]
     private int $tasksCompleted = 0;
 
     #[ORM\Column]
+    #[Groups(['stats:read'])]
     private int $notesCreated = 0;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['stats:read'])]
     private string $rank = 'Beginner';
 
     #[ORM\Column(type: Types::JSON)]
+    #[Groups(['stats:read'])]
     private array $badges = [];
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Groups(['stats:read'])]
     private ?\DateTimeImmutable $lastActivity = null;
 
     public function __construct()

@@ -25,6 +25,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_task_completed', columns: ['completed'])]
 #[ORM\Index(name: 'idx_task_created_at', columns: ['created_at'])]
 #[ApiResource(
+    security: "is_granted('ROLE_PLAYGROUND_USER')",
     operations: [
         new GetCollection(
             description: 'Get all tasks for the authenticated user'
