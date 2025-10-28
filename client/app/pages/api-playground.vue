@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ApiEndpointsResponse } from '~/types/api'
+import { storeToRefs } from 'pinia'
 
 useSeoMeta({
   title: 'API Playground - Alexander Matte',
@@ -9,17 +10,20 @@ useSeoMeta({
 const sessionStore = useSessionStore()
 const { buildApiUrl } = useApi()
 
-const username = computed(() => sessionStore.username)
-const isConnected = computed(() => sessionStore.isAuthenticated)
+// Use storeToRefs to maintain reactivity when destructuring
+const { username, isAuthenticated: isConnected, token } = storeToRefs(sessionStore)
 
-const { data: endpointsData } = await useFetch<ApiEndpointsResponse>(
+const { data: endpointsData, refresh: refreshEndpoints, pending: endpointsPending, error: endpointsError } = await useFetch(
   buildApiUrl('/api/endpoints'),
   {
-    headers: {
-      'accept': 'application/ld+json'
-    }
+    headers: computed(() => ({
+      'Accept': 'application/ld+json',
+      ...(token.value && { 'Authorization': `Bearer ${token.value}` })
+    })),
+    watch: [token]
   }
 )
+
 
 const {
   selectedEndpoint,
@@ -67,7 +71,7 @@ const handleExecute = async () => {
     pathParams: pathParams.value,
     pathParameterNames: pathParameterNames.value,
     formData: formData.value,
-    token: sessionStore.token,
+    token: token.value,
   })
   // Refresh stats after request to update the view
   await refreshStats()
@@ -80,6 +84,11 @@ const logoutAndClearData = () => {
   responseData.value = null
   responseTime.value = null
   logoutModalOpen.value = false
+}
+
+const login = async() => {
+  await sessionStore.initializeSession()
+  await refreshEndpoints()
 }
 </script>
 
@@ -138,12 +147,11 @@ const logoutAndClearData = () => {
                 </span>
               </div>
               <UButton
-                v-if="!sessionStore.isAuthenticated"
+                v-if="!isConnected"
                 label="Login"
                 color="primary"
                 variant="subtle"
-                @click="sessionStore.initializeSession"
-                
+                @click="login"
               />
               <UModal
                 v-else
@@ -189,7 +197,9 @@ const logoutAndClearData = () => {
             variant="soft"
             icon="i-heroicons-information-circle"
             title="Temporary Playground"
-            description="All data is automatically purged daily at midnight UTC. Feel free to experiment!"
+            description="All data is automatically purged daily at midnight UTC. Feel free to experiment!
+            For security reasons, do not post sensitive data
+            "
             class="mt-4"
           />
         </UCard>
@@ -207,15 +217,19 @@ const logoutAndClearData = () => {
             :path-parameter-names="pathParameterNames"
             :writable-properties="writableProperties"
             :is-loading="isLoading"
+            :is-authenticated="isConnected"
             @execute="handleExecute"
           />
           
           <ApiPlaygroundApiResponseDisplay
             :response-data="responseData"
             :response-time="responseTime"
+            :is-authenticated="isConnected"
           />
           
-          <UCard>
+          <UCard
+          v-if="isConnected"
+          >
             <template #header>
               <div class="flex items-center gap-2">
                 <UIcon name="i-heroicons-book-open" class="text-2xl text-primary" />
@@ -223,7 +237,13 @@ const logoutAndClearData = () => {
               </div>
             </template>
 
-            <ApiEndpointsList />
+            <ApiEndpointsList 
+              :endpoints-data="endpointsData as ApiEndpointsResponse | null" 
+              :pending="endpointsPending"
+              :error="endpointsError"
+              :refresh="refreshEndpoints"
+            />
+
           </UCard>
         </div>
 
@@ -256,6 +276,7 @@ const logoutAndClearData = () => {
           </UCard>
 
           <ApiPlaygroundApiQuickActions
+            :is-authenticated="isConnected"
             @create-sample-task="createSampleTask"
             @create-sample-note="createSampleNote"
             @refresh-data="refreshStats"

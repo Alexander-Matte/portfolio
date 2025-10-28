@@ -1,4 +1,8 @@
 <script setup lang="ts">
+const props = defineProps<{
+  isAuthenticated: boolean
+}>()
+
 const emit = defineEmits<{
   'create-sample-task': []
   'create-sample-note': []
@@ -15,7 +19,16 @@ const emit = defineEmits<{
       </div>
     </template>
 
-    <div class="space-y-2">
+    <!-- Show message when not authenticated -->
+    <div v-if="!props.isAuthenticated" class="py-8 text-center">
+      <UIcon name="i-heroicons-lock-closed" class="text-4xl text-gray-400 mb-3" />
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        Please login to access quick actions
+      </p>
+    </div>
+
+    <!-- Show actions when authenticated -->
+    <div v-else class="space-y-2">
       <UButton
         block
         color="neutral"

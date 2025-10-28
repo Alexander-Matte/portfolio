@@ -16,12 +16,12 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   }
 
   // Initialize session on first visit or when session is invalid/expired
-  try {
-    await sessionStore.initializeSession()
-  } catch (error) {
-    console.error('Failed to initialize session in middleware:', error)
-    // Don't block navigation even if session initialization fails
-    // The app can handle the error state from the store
-  }
+  // try {
+  //   await sessionStore.initializeSession()
+  // } catch (error) {
+  //   console.error('Failed to initialize session in middleware:', error)
+  //   // Don't block navigation even if session initialization fails
+  //   // The app can handle the error state from the store
+  // }
 })
 

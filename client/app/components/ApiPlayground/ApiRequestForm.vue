@@ -11,6 +11,7 @@ const props = defineProps<{
   formData: Record<string, any>
   writableProperties: ApiProperty[]
   isLoading: boolean
+  isAuthenticated: boolean
 }>()
 
 const emit = defineEmits<{
@@ -51,7 +52,18 @@ const localFormData = computed({
       </div>
     </template>
 
-    <div class="space-y-6">
+    <!-- Show message when not authenticated -->
+    <div v-if="!props.isAuthenticated" class="py-16 text-center">
+      <UIcon name="i-heroicons-lock-closed" class="text-6xl text-gray-400 mb-4" />
+      <p class="text-lg text-gray-700 dark:text-gray-300 font-medium mb-2">
+        Please login to use the API Explorer
+      </p>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        Authentication is required to interact with the API
+      </p>
+    </div>
+
+    <div v-else class="space-y-6">
       <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
           Request Configuration
