@@ -157,7 +157,7 @@ const localFormData = computed({
               size="lg"
             />
             <div v-else-if="property.type === 'bool'" class="flex items-center gap-3 pt-2">
-              <UToggle
+              <USwitch
                 v-model="localFormData[property.name]"
                 size="lg"
               />

@@ -14,6 +14,7 @@ services:
       #- /app/vendor
     environment:
       MERCURE_EXTRA_DIRECTIVES: demo
+      CORS_ALLOW_ORIGIN: '^https?://.*'
       # See https://xdebug.org/docs/all_settings#mode
       XDEBUG_MODE: "${XDEBUG_MODE:-off}"
     extra_hosts:

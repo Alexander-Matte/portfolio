@@ -35,6 +35,8 @@ http://{$SERVER_NAME:localhost} {
 		subscriptions
 		# Extra directives
 		{$MERCURE_EXTRA_DIRECTIVES}
+		# Add CORS headers for cross-origin requests
+		cors_origins *
 	}
 
 	vulcain

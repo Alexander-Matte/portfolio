@@ -6,6 +6,7 @@ use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Get;
 use App\Repository\ActivityRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -18,6 +19,9 @@ use Doctrine\ORM\Mapping as ORM;
     operations: [
         new GetCollection(
             description: 'Get recent activity feed'
+        ),
+        new Get(
+            description: 'Get a single activity'
         )
     ],
     paginationEnabled: true,

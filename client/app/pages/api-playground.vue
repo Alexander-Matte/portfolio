@@ -62,7 +62,8 @@ const {
   refresh: refreshStats
 } = useUserStats()
 
-const realtimeUpdates = ref<any[]>([])
+// Subscribe to real-time activity feed
+const { updates: realtimeUpdates } = useActivityFeed('http://localhost/topics/activities')
 
 const handleExecute = async () => {
   await executeRequest({
@@ -89,6 +90,11 @@ const logoutAndClearData = () => {
 const login = async() => {
   await sessionStore.initializeSession()
   await refreshEndpoints()
+}
+
+const formatTimestamp = (timestamp: string) => {
+  const date = new Date(timestamp)
+  return date.toLocaleString()
 }
 </script>
 
@@ -238,7 +244,7 @@ const login = async() => {
             </template>
 
             <ApiEndpointsList 
-              :endpoints-data="endpointsData as ApiEndpointsResponse | null" 
+              :endpoints-data="(endpointsData ?? null) as ApiEndpointsResponse | null" 
               :pending="endpointsPending"
               :error="endpointsError"
               :refresh="refreshEndpoints"
@@ -270,8 +276,19 @@ const login = async() => {
               <div
                 v-for="update in realtimeUpdates"
                 :key="update.id"
-                class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-              ></div>
+                class="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2"
+              >
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <UIcon name="i-heroicons-user-circle" class="text-lg" />
+                      <span class="font-semibold text-sm">{{ update.username }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ update.message }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-500">{{ formatTimestamp(update.timestamp) }}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </UCard>
 
