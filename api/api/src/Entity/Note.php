@@ -10,6 +10,8 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Patch;
+use App\Interfaces\ActivityLoggableInterface;
 use App\Repository\NoteRepository;
 use App\State\Processors\NoteProcessor;
 use Doctrine\DBAL\Types\Types;
@@ -21,7 +23,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_user_id', columns: ['user_id'])]
 #[ORM\Index(name: 'idx_created_at', columns: ['created_at'])]
 #[ApiResource(
-    security: "is_granted('ROLE_PLAYGROUND_USER')",
     operations: [
         new GetCollection(
             description: 'Get all notes for the authenticated user'
@@ -34,20 +35,25 @@ use Symfony\Component\Validator\Constraints as Assert;
             description: 'Get a single note'
         ),
         new Put(
-            description: 'Update a note',
+            description: 'Update a note (full update)',
             processor: NoteProcessor::class
         ),
         new Delete(
             description: 'Delete a note'
+        ),
+        new Patch(
+            description: 'Partially update a note',
+            processor: NoteProcessor::class
         )
     ],
+    normalizationContext: ['groups' => ['note:read']],
+    denormalizationContext: ['groups' => ['note:write']],
     paginationEnabled: true,
     paginationItemsPerPage: 30,
-    normalizationContext: ['groups' => ['note:read']],
-    denormalizationContext: ['groups' => ['note:write']]
+    security: "is_granted('ROLE_PLAYGROUND_USER')"
 )]
 #[ApiFilter(OrderFilter::class, properties: ['createdAt'])]
-class Note
+class Note implements ActivityLoggableInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -141,5 +147,28 @@ class Note
         $this->createdAt = $createdAt;
 
         return $this;
+    }
+
+    public function getActivityMessage(string $method, string $type): string
+    {
+        $titles = [
+            'post' => 'created',
+            'put' => 'updated',
+            'patch' => 'updated',
+            'delete' => 'deleted',
+        ];
+
+        $action = $titles[strtolower($method)] ?? 'modified';
+
+        return "{$action} the {$type} “{$this->getTitle()}”";
+    }
+
+    public function getActivityPayload(string $shortName): array
+    {
+        return [
+            "{$shortName}_id" => $this->getId(),
+            'title' => $this->getTitle(),
+            'content' => $this->getContent(),
+        ];
     }
 }

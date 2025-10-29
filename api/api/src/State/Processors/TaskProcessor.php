@@ -8,6 +8,7 @@ use App\Entity\Task;
 use App\Entity\Activity;
 use App\Security\PlaygroundUser;
 use App\Service\ActivityPublisher;
+use App\Service\ActivitySetter;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +18,8 @@ class TaskProcessor implements ProcessorInterface
     public function __construct(
         private ProcessorInterface $persistProcessor,
         private Security $security,
-        private ActivityPublisher $activityPublisher
+        private ActivityPublisher $activityPublisher,
+        private ActivitySetter $activitySetter
     ) {
     }
 
@@ -43,18 +45,10 @@ class TaskProcessor implements ProcessorInterface
         $task = $this->persistProcessor->process($data, $operation, $uriVariables, $context);
 
         // Create Activity after Task is saved
-        $activity = new Activity();
-        $activity->setType('task.created'); // You could also set 'task.updated' based on $operation
-        $activity->setUsername($username);
-        $activity->setMessage("User: {$username} created task '{$task->getTitle()}'");
-        $activity->setData([
-            'task_id' => $task->getId(),
-            'title' => $task->getTitle(),
-            'description' => $task->getDescription(),
-            'completed' => $task->isCompleted(),
-            'createdAt' => $task->getCreatedAt()?->format('Y-m-d H:i:s'),
-            'updatedAt' => $task->getUpdatedAt()?->format('Y-m-d H:i:s'),
-        ]);
+        $activity = $this->activitySetter->setActivity(
+            $operation,
+            $username,
+            $data);
 
         $this->activityPublisher->publish($activity);
 

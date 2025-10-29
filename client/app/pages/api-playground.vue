@@ -94,8 +94,12 @@ const login = async() => {
 
 const formatTimestamp = (timestamp: string) => {
   const date = new Date(timestamp)
-  return date.toLocaleString()
+  return date.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  })
 }
+
 </script>
 
 <template>
@@ -313,7 +317,7 @@ const formatTimestamp = (timestamp: string) => {
                 <span class="text-sm">Symfony 7</span>
               </div>
               <div class="flex items-center gap-3">
-                <UIcon name="i-logos-api-platform" class="text-2xl" />
+                <UIcon name="i-tabler-rocket" class="text-2xl" />
                 <span class="text-sm">API Platform</span>
               </div>
               <div class="flex items-center gap-3">

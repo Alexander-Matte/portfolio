@@ -6,8 +6,10 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Note;
 use App\Entity\Activity;
+use App\Model\RequestMethodEnum;
 use App\Security\PlaygroundUser;
 use App\Service\ActivityPublisher;
+use App\Service\ActivitySetter;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,8 +19,10 @@ class NoteProcessor implements ProcessorInterface
     public function __construct(
         private ProcessorInterface $persistProcessor,
         private Security $security,
-        private ActivityPublisher $activityPublisher
+        private ActivityPublisher $activityPublisher,
+        private ActivitySetter $activitySetter
     ) {
+
     }
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
@@ -41,18 +45,13 @@ class NoteProcessor implements ProcessorInterface
         // Persist the Note first
         $note = $this->persistProcessor->process($data, $operation, $uriVariables, $context);
 
-        // Create Activity after Note is saved
-        $activity = new Activity();
-        $activity->setType('note.created');
-        $activity->setUsername($username);
-        $activity->setMessage("User: {$username} created note '{$note->getTitle()}'");
-        $activity->setData([
-            'note_id' => $note->getId(),
-            'title' => $note->getTitle(),
-            'content' => $note->getContent(),
-        ]);
+        $activity = $this->activitySetter->setActivity(
+            $operation,
+            $username,
+            $data);
 
         $this->activityPublisher->publish($activity);
+
 
         return $note;
     }

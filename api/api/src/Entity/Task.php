@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use App\Interfaces\ActivityLoggableInterface;
 use App\Repository\TaskRepository;
 use App\State\Processors\TaskProcessor;
 use Doctrine\DBAL\Types\Types;
@@ -25,7 +26,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_task_completed', columns: ['completed'])]
 #[ORM\Index(name: 'idx_task_created_at', columns: ['created_at'])]
 #[ApiResource(
-    security: "is_granted('ROLE_PLAYGROUND_USER')",
     operations: [
         new GetCollection(
             description: 'Get all tasks for the authenticated user'
@@ -49,14 +49,15 @@ use Symfony\Component\Validator\Constraints as Assert;
             description: 'Delete a task'
         )
     ],
+    normalizationContext: ['groups' => ['task:read']],
+    denormalizationContext: ['groups' => ['task:write']],
     paginationEnabled: true,
     paginationItemsPerPage: 30,
-    normalizationContext: ['groups' => ['task:read']],
-    denormalizationContext: ['groups' => ['task:write']]
+    security: "is_granted('ROLE_PLAYGROUND_USER')"
 )]
 #[ApiFilter(BooleanFilter::class, properties: ['completed'])]
 #[ApiFilter(OrderFilter::class, properties: ['createdAt', 'updatedAt'])]
-class Task
+class Task implements ActivityLoggableInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -186,5 +187,29 @@ class Task
         $this->updatedAt = $updatedAt;
 
         return $this;
+    }
+
+    public function getActivityMessage(string $method, string $type): string
+    {
+        $titles = [
+            'post' => 'created',
+            'put' => 'updated',
+            'patch' => 'updated',
+            'delete' => 'deleted',
+        ];
+
+        $action = $titles[strtolower($method)] ?? 'modified';
+
+        return "{$action} the {$type} “{$this->getTitle()}”";
+    }
+
+    public function getActivityPayload(string $shortName): array
+    {
+        return [
+            "{$shortName}_id" => $this->getId(),
+            'title' => $this->getTitle(),
+            'description' => $this->getDescription(),
+            'completed' => $this->isCompleted(),
+        ];
     }
 }

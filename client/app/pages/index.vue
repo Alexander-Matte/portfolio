@@ -273,7 +273,7 @@ const sessionStore = useSessionStore()
                 <span class="font-semibold">Symfony</span>
               </div>
               <div class="flex items-center gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg transition-all hover:scale-105">
-                <UIcon name="i-logos-api-platform" class="text-3xl" />
+                <UIcon name="i-tabler-rocket" class="text-3xl" />
                 <span class="font-semibold">API Platform</span>
               </div>
               <div class="flex items-center gap-3 p-3 bg-white/60 dark:bg-gray-800/60 rounded-lg transition-all hover:scale-105">
