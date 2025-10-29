@@ -13,6 +13,7 @@ use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Patch;
 use App\Interfaces\ActivityLoggableInterface;
 use App\Repository\NoteRepository;
+use App\State\Providers\NoteProvider;
 use App\State\Processors\NoteProcessor;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -25,14 +26,16 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiResource(
     operations: [
         new GetCollection(
-            description: 'Get all notes for the authenticated user'
+            description: 'Get all notes for the authenticated user',
+            provider: NoteProvider::class,
         ),
         new Post(
             description: 'Create a new note',
             processor: NoteProcessor::class
         ),
         new Get(
-            description: 'Get a single note'
+            description: 'Get a single note',
+            provider: NoteProvider::class,
         ),
         new Put(
             description: 'Update a note (full update)',
@@ -48,9 +51,8 @@ use Symfony\Component\Validator\Constraints as Assert;
     ],
     normalizationContext: ['groups' => ['note:read']],
     denormalizationContext: ['groups' => ['note:write']],
-    paginationEnabled: true,
-    paginationItemsPerPage: 30,
-    security: "is_granted('ROLE_PLAYGROUND_USER')"
+    paginationEnabled: false,
+    security: "is_granted('ROLE_PLAYGROUND_USER')",
 )]
 #[ApiFilter(OrderFilter::class, properties: ['createdAt'])]
 class Note implements ActivityLoggableInterface

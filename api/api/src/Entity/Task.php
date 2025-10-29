@@ -15,6 +15,7 @@ use ApiPlatform\Metadata\Put;
 use App\Interfaces\ActivityLoggableInterface;
 use App\Repository\TaskRepository;
 use App\State\Processors\TaskProcessor;
+use App\State\Providers\TaskProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -28,14 +29,16 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiResource(
     operations: [
         new GetCollection(
-            description: 'Get all tasks for the authenticated user'
+            description: 'Get all tasks for the authenticated user',
+            provider: TaskProvider::class
         ),
         new Post(
             description: 'Create a new task',
             processor: TaskProcessor::class
         ),
         new Get(
-            description: 'Get a single task'
+            description: 'Get a single task',
+            provider: TaskProvider::class
         ),
         new Put(
             description: 'Update a task (full update)',
