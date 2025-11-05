@@ -1,0 +1,137 @@
+name: Deploy to Production
+
+on:
+  push:
+    tags:
+      - 'release-*'
+    branches:
+      - main
+
+jobs:
+  validate-tag:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/release-')
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+      tag_name: ${{ github.ref_name }}
+    steps:
+      - name: Check tag format
+        id: check
+        run: |
+          TAG="${{ github.ref_name }}"
+          # Tag format: release-YYYYMMDD-HHMM
+          if [[ $TAG =~ ^release-[0-9]{8}-[0-9]{4}$ ]]; then
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            echo "✓ Tag format is valid: $TAG"
+          else
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+            echo "✗ Tag format is invalid. Expected format: release-YYYYMMDD-HHMM"
+            echo "  Example: release-20251105-1858"
+            exit 1
+          fi
+
+  deploy:
+    needs: validate-tag
+    runs-on: ubuntu-latest
+    if: needs.validate-tag.outputs.should_deploy == 'true'
+    environment:
+      name: production
+      url: https://${{ secrets.DOMAIN }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag is on main branch
+        run: |
+          TAG="${{ needs.validate-tag.outputs.tag_name }}"
+          git fetch --tags
+          # Check if tag exists on main branch
+          if git branch -r --contains "refs/tags/$TAG" | grep -q "origin/main"; then
+            echo "✓ Tag $TAG is on main branch"
+          else
+            echo "✗ Tag $TAG is not on main branch. Deployment aborted."
+            exit 1
+          fi
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          TAG_NAME: ${{ needs.validate-tag.outputs.tag_name }}
+        run: |
+          ssh $SERVER_USER@$SERVER_HOST bash << 'EOF'
+            set -e
+            cd "$DEPLOY_PATH"
+            
+            # Pull the latest code with the tag
+            git fetch --tags
+            git checkout "$TAG_NAME"
+            
+            # Pull latest main branch (for reference)
+            git fetch origin main
+            
+            # Run deployment script
+            if [ -f deploy.sh ]; then
+              chmod +x deploy.sh
+              ./deploy.sh
+            else
+              echo "⚠ deploy.sh not found, running basic deployment"
+              
+              # Basic deployment steps
+              docker compose -f docker-compose.prod.yml pull
+              docker compose -f docker-compose.prod.yml build --no-cache
+              docker compose -f docker-compose.prod.yml up -d
+              
+              # Run database migrations
+              docker compose -f docker-compose.prod.yml exec -T api php bin/console doctrine:migrations:migrate --no-interaction || true
+              
+              # Clean up old images
+              docker image prune -f
+            fi
+          EOF
+
+      - name: Health check
+        run: |
+          sleep 10
+          SERVER_HOST="${{ secrets.SERVER_HOST }}"
+          DOMAIN="${{ secrets.DOMAIN }}"
+          
+          # Check client
+          if curl -f -s "https://${DOMAIN}/health" > /dev/null; then
+            echo "✓ Client health check passed"
+          else
+            echo "✗ Client health check failed"
+            exit 1
+          fi
+          
+          # Check API
+          if curl -f -s "https://api.${DOMAIN}" > /dev/null; then
+            echo "✓ API health check passed"
+          else
+            echo "✗ API health check failed"
+            exit 1
+          fi
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "🚀 Deployment successful!"
+          else
+            echo "❌ Deployment failed!"
+          fi
+

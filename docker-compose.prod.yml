@@ -1,0 +1,106 @@
+services:
+  # Database
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - app-network
+
+  # Backend API (FrankenPHP)
+  api:
+    build:
+      context: ./api/api
+      target: frankenphp_prod
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      APP_ENV: prod
+      APP_SECRET: ${APP_SECRET}
+      SERVER_NAME: api.internal
+      MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
+      MERCURE_PUBLISHER_JWT_ALG: ${CADDY_MERCURE_JWT_ALG:-HS256}
+      MERCURE_SUBSCRIBER_JWT_ALG: ${CADDY_MERCURE_JWT_ALG:-HS256}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-172.16.0.0/12}
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-^api\.internal$$}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}?serverVersion=16&charset=utf8
+      MERCURE_URL: http://api/.well-known/mercure
+      MERCURE_PUBLIC_URL: ${MERCURE_PUBLIC_URL:-https://api.${DOMAIN}/.well-known/mercure}
+      MERCURE_JWT_SECRET: ${CADDY_MERCURE_JWT_SECRET}
+      MERCURE_TRANSPORT_URL: bolt:///data/mercure.db
+      CORS_ALLOW_ORIGIN: ${CORS_ALLOW_ORIGIN:-^https://${DOMAIN}$$}
+      CADDY_GLOBAL_OPTIONS: ${CADDY_GLOBAL_OPTIONS:-}
+      FRANKENPHP_CONFIG: import worker.Caddyfile
+    volumes:
+      - api_caddy_data:/data
+      - api_caddy_config:/config
+    networks:
+      - app-network
+    # Internal only - not exposed to host
+    expose:
+      - "80"
+
+  # Frontend Client (Nuxt static)
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL:-https://api.${DOMAIN}}
+        NUXT_PUBLIC_MERCURE_URL: ${NUXT_PUBLIC_MERCURE_URL:-https://api.${DOMAIN}/.well-known/mercure}
+    restart: unless-stopped
+    networks:
+      - app-network
+    # Internal only - not exposed to host
+    expose:
+      - "80"
+
+  # Caddy Reverse Proxy
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+      API_DOMAIN: ${API_DOMAIN:-api.${DOMAIN}}
+      CLIENT_DOMAIN: ${CLIENT_DOMAIN:-${DOMAIN}}
+      CADDY_EMAIL: ${CADDY_EMAIL}
+      CADDY_ACME_CA: ${CADDY_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+    networks:
+      - app-network
+    depends_on:
+      - api
+      - client
+
+volumes:
+  database_data:
+  api_caddy_data:
+  api_caddy_config:
+  caddy_data:
+  caddy_config:
+
+networks:
+  app-network:
+    driver: bridge
+

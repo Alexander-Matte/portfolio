@@ -37,8 +37,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Public keys that are exposed to the client
     public: {
-      apiBaseUrl: 'http://localhost/api',
-      mercureUrl: 'http://localhost/.well-known/mercure'
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost/api',
+      mercureUrl: process.env.NUXT_PUBLIC_MERCURE_URL || 'http://localhost/.well-known/mercure'
     }
   }
 })

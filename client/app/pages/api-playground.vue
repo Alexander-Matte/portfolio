@@ -63,7 +63,7 @@ const {
 } = useUserStats()
 
 // Subscribe to real-time activity feed
-const { updates: realtimeUpdates } = useActivityFeed('http://localhost/topics/activities')
+const { updates: realtimeUpdates } = useActivityFeed('/topics/activities')
 
 const handleExecute = async () => {
   await executeRequest({

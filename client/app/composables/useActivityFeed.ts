@@ -8,8 +8,10 @@ export function useActivityFeed(topic: string = 'http://localhost/topics/activit
 
   onMounted(() => {
     const mercureUrl = config.public.mercureUrl as string
+    // Use the configured topic or default
+    const topicUrl = topic.startsWith('http') ? topic : `${mercureUrl.split('/.well-known/mercure')[0]}${topic}`
     const url = new URL(mercureUrl)
-    url.searchParams.append('topic', topic)
+    url.searchParams.append('topic', topicUrl)
 
     eventSource = new EventSource(url.toString())
 

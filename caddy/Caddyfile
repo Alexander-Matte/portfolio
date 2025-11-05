@@ -1,0 +1,99 @@
+# Global options
+{
+    email {env.CADDY_EMAIL}
+    acme_ca {env.CADDY_ACME_CA}
+}
+
+# Main domain (client)
+{env.CLIENT_DOMAIN} {
+    log {
+        output file /var/log/caddy/client.log
+        format json
+    }
+
+    # Reverse proxy to client container
+    reverse_proxy client:80 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Security headers
+    header {
+        # Enable HSTS
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        # Prevent clickjacking
+        X-Frame-Options "SAMEORIGIN"
+        # Prevent MIME type sniffing
+        X-Content-Type-Options "nosniff"
+        # XSS protection
+        X-XSS-Protection "1; mode=block"
+        # Referrer policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Content Security Policy
+        -Server
+        -X-Powered-By
+    }
+
+    # Compression
+    encode zstd gzip
+}
+
+# API subdomain
+{env.API_DOMAIN} {
+    log {
+        output file /var/log/caddy/api.log
+        format json
+    }
+
+    # Reverse proxy to API container
+    reverse_proxy api:80 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # CORS headers (additional layer, main CORS handled by Symfony)
+    header {
+        Access-Control-Allow-Origin "{env.CLIENT_DOMAIN}"
+        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization, Preload, Fields"
+        Access-Control-Expose-Headers "Link"
+        Access-Control-Max-Age "3600"
+        -Server
+        -X-Powered-By
+    }
+
+    # Handle preflight requests
+    @options {
+        method OPTIONS
+    }
+    respond @options 204 {
+        header Access-Control-Allow-Origin "{env.CLIENT_DOMAIN}"
+        header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        header Access-Control-Allow-Headers "Content-Type, Authorization, Preload, Fields"
+    }
+
+    # Compression
+    encode zstd gzip
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # Rate limiting (optional, adjust as needed)
+    rate_limit {
+        zone dynamic {
+            key {remote_host}
+            events 100
+            window 1m
+        }
+    }
+}
+
